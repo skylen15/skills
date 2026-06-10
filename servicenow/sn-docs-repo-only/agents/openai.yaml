@@ -1,0 +1,4 @@
+interface:
+  display_name: "ServiceNow Docs Repo Only"
+  short_description: "Search only vendored ServiceNow documentation"
+  default_prompt: "Use $sn-docs-repo-only to answer from repos/servicenow-docs only."
