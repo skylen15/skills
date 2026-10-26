@@ -1,126 +1,84 @@
 ---
 name: sn-docs
-description: "Use ServiceNow documentation sources in version-aware order: project-local docs, shared release clone, then Context7 CLI sources. Use when answering or implementing ServiceNow-related work, when user mentions ServiceNow docs/content/source-of-truth, or when a repo should use official ServiceNow documentation."
+description: >
+  Research ServiceNow products, APIs, SDKs, Fluent metadata-as-code,
+  tables, security, and configuration using authoritative documentation.
 ---
 
-# ServiceNow Docs Source
+# ServiceNow Docs Advisor
 
-## Quick Start
+Authoritative source is the local repo `./repos/ServiceNowDocs` beside this `SKILL.md`. It is a monthly snapshot of one release family (`australia`/latest). Treat it as **Tier 1 official** and exhaust it before any web access.
 
-When ServiceNow facts matter, determine the documentation version first, then use the source order below before relying on memory or broad web search.
+## Local-first contract
 
-1. Determine release family/version:
-   - Use the version explicitly named by the user, such as `australia`, `zurich`, `xanadu`, or `yokohama`.
-   - If no version is explicit, use the current project's `AGENTS.md` default when it names a ServiceNow release.
-   - If no project default is available, default to `zurich`.
-   - The user may switch versions in any later command by naming the release explicitly.
-2. Search project-local docs first: `repos/servicenow-docs`.
-3. If project-local docs are unavailable, search the shared release clone: `~/.local/share/servicenow-docs/{version}`.
-4. If neither local source is available or sufficient, use Context7 CLI sources in this exact order:
-   - `https://context7.com/websites/developer_servicenow?contextType=info`
-   - `https://context7.com/websites/servicenowguru`
-   - `https://context7.com/servicenowdevprogram/code-snippets`
+- Resolve `./repos/ServiceNowDocs` from this skill's directory; never substitute workspace-relative or external paths.
+- Treat the repo as read-only. Never fetch, pull, clone, or modify it.
+- Search with your native ripgrep-backed search tool over `./repos/ServiceNowDocs/markdown`. Fall back to shell `grep -r` only if no native tool exists (`rg` is usually NOT installed).
+- Cite a repo path for every claim drawn from local docs.
 
+## Graphify index (optional accelerator)
 
-Context7 CLI workflow:
+The local corpus has a persistent Graphify index at `./graphify-out` beside
+`repos/`. Use it as a navigation and relationship index when the question spans
+multiple publications, APIs, tables, plugins, or cross-links. The index is not
+an authority and does not replace reading the source markdown.
 
-1. Resolve the best Context7 library ID first:
+- Resolve the Graphify working directory from this skill's directory; never
+  place generated output inside `repos/ServiceNowDocs`.
+- Before graph traversal, check `./graphify-out/graph.json`. If it exists, use
+  the Graphify query workflow to identify candidate nodes and source locations.
+- Validate every material answer against the cited files under
+  `./repos/ServiceNowDocs/markdown`; preserve the local-first contract and cite
+  those files, not Graphify output.
+- If the index is absent or stale, use the six local-search steps below. Do not
+  block a documentation answer on Graphify availability.
+- Build or refresh the index from this skill directory with:
+  `graphify extract repos/ServiceNowDocs/markdown --out .`
+  The same command is safe to rerun; Graphify uses its manifest and semantic
+  cache to process only changed documentation files. `graphify update` is for
+  code-only incremental extraction and is not the refresh command for this
+  Markdown corpus.
+- Treat `graphify-out/` as generated state. Do not modify the vendored docs
+  repository, and do not cite generated reports as official documentation.
 
-```sh
-ctx7 library "ServiceNow" "<user question>"
-```
+## Local search discipline
 
-2. Prefer matches for the source order above: `developer_servicenow`, then `servicenowguru`, then `servicenowdevprogram/code-snippets`. Pick the best exact or most relevant library ID from the CLI output.
-3. Fetch documentation with the selected ID and the user's full question:
+Run all six steps before declaring local insufficient. Skipping steps causes false "I don't know" answers when docs exist.
 
-```sh
-ctx7 docs <libraryId> "<user question>"
-```
+1. **Translate** the question into ServiceNow terminology (exact API/table/property/feature names). Never search the user's casual wording — docs are formal prose and literal phrases return zero hits.
+2. **Search identifiers + variants**: exact names plus known ServiceNow synonyms.
+3. **Navigate structure**: pick the relevant product area under `markdown/`, open that publication's `index.md`, and scan its titles.
+4. **Search frontmatter**: match `title` and `product_area` for precise pages.
+5. **Read** the top candidate files and follow their cross-links.
+6. **Declare insufficient only after 1–5**, and state what you searched.
 
-4. Do not use Context7 MCP tools for this skill. The expected interface is the globally installed `ctx7` CLI.
+"Local exhausted" = steps 1–5 done with no supporting evidence. This same bar gates web access below.
 
-The ServiceNowDocs `main` branch is only repository metadata. Product docs live on release branches such as `zurich`, `yokohama`, `xanadu`, and `australia`.
+## Version awareness
 
-## Lookup Workflow
+Local covers `australia`/latest only. Note the family on version-sensitive answers. If the user names another family (`zurich`, `yokohama`, `xanadu`), treat it as a local gap and fetch that branch's raw markdown via web (still Tier 1):
+`https://raw.githubusercontent.com/ServiceNow/ServiceNowDocs/{branch}/markdown/{publication}/{file}`
 
-1. Determine the ServiceNow release family. Use the user's explicit version first, then the current project's `AGENTS.md` default if present, otherwise use `zurich`.
-2. Check for `repos/servicenow-docs` in the current project. Treat this as the highest-priority source, regardless of operating system or agent runtime.
-3. If `repos/servicenow-docs` exists, confirm it contains product docs, usually a `markdown/` tree plus files such as `llms.txt`. Search it first with exact terms from the request.
-4. If `repos/servicenow-docs` does not exist, check `~/.local/share/servicenow-docs/{version}` where `{version}` is the selected release family. Resolve `~` using the current environment's home-directory mechanism; do not hard-code OS-specific paths.
-5. If the shared release clone exists, search it with exact terms from the request.
-6. If neither local source exists, tell the user to clone or pull the selected branch from:
+## Web fallback
 
-```text
-https://github.com/ServiceNow/ServiceNowDocs
-```
+Web fires **only after local is exhausted**. Use it wisely: gated, ordered by trust, and labeled.
 
-Use a normal git clone that tracks the selected branch, for example:
+- **Announce, then go.** State the local gap before crossing to web (e.g. "Local has no coverage of X — checking official ServiceNow remote.").
+- **Go in trust order**, stopping as soon as a higher tier answers:
+1. Official remote (Tier 1): raw.githubusercontent ServiceNow branches, ServiceNow developer docs, support KBs, release notes, SDK docs.
+2. Community (Tier 2), then Practitioner (Tier 3), then Weak signals (Tier 4).
+- **Never fetch `servicenow.com/docs`** — it is a JS single-page app that returns no readable content. Use raw markdown URLs or web search instead.
+- **Label every web claim** with its trust label and cite the URL.
+- Lower tiers (2–4) are loud about being non-official; surface their labels prominently.
 
-```sh
-git clone --branch {version} --single-branch https://github.com/ServiceNow/ServiceNowDocs.git ~/.local/share/servicenow-docs/{version}
-```
+The six trust labels: **Official guidance**, **Community signal**, **Practitioner advice**, **Weak/unverified signal**, **Instance-confirmed finding**, **Model judgment, low confidence**. Full tier definitions and routing: see [SOURCE-TRUST.md](SOURCE-TRUST.md). Read it before relying on Tier 2–4 sources.
 
-7. If exact-term local search is noisy, empty, or likely missing docs because the user's wording differs from ServiceNow's wording, use semantic search over the selected local docs path when available.
-8. If local docs and semantic search do not provide enough evidence, use Context7 CLI sources in the required order listed above.
-9. Read nearby files, navigation files, examples, and related pages before answering.
-10. Treat local ServiceNowDocs trees as read-only reference material.
-11. Do not import, copy wholesale, or edit files from ServiceNowDocs unless explicitly asked.
-12. Cite the local path for local docs and include Context7 library IDs or source URLs when Context7 was used.
+Optional context hygiene: when the web step goes broad across multiple tiers, you may delegate it to a subagent that returns trust-labeled findings (prefer a model strong at web search, e.g. Google Gemini, when the runtime offers it). Default is inline. Stay tool-agnostic — never require a subagent.
 
-## Search Patterns
+## Answer contract
 
-Use focused searches before broad ones:
-
-```sh
-rg -n "GlideRecord|Table API|Flow Designer" <docs-path>
-rg -n "sysparm_query|encoded query" <docs-path>
-rg -n "Zurich|Yokohama|Xanadu|Australia" <docs-path>
-```
-
-Use `rg` when available, but do not require it. If `rg` is not installed, use these cross-platform fallbacks:
-
-```sh
-git grep -n "GlideRecord\|Table API\|Flow Designer" -- <docs-path>
-grep -R -n -E "GlideRecord|Table API|Flow Designer" <docs-path>
-```
-
-On Windows PowerShell:
-
-```powershell
-Get-ChildItem -Path <docs-path> -Recurse -File | Select-String -Pattern "GlideRecord|Table API|Flow Designer"
-```
-
-If names differ from common wording, search likely variants:
-
-```sh
-rg -n "IntegrationHub|Integration Hub|spoke" <docs-path>
-rg -n "RESTMessageV2|REST Message V2|outbound REST" <docs-path>
-```
-
-Apply the same fallback pattern for variant searches when `rg` is unavailable.
-
-`<docs-path>` is `repos/servicenow-docs` when present; otherwise it is `~/.local/share/servicenow-docs/{version}` when present.
-
-Use exact local search first for API names, table names, properties, release markers, exhaustive checks, and quick confirmation of literal strings. Use semantic search second for conceptual, fuzzy, or broad documentation lookup over the selected local docs path. Use Context7 third, in the required order, when local docs are unavailable or insufficient.
-
-When using the Semble CLI fallback, include `--content docs`:
-
-```sh
-semble search "how to configure credentials for integrations" <docs-path> --content docs --top-k 10
-semble search "how to create a custom Flow Designer action" <docs-path> --content docs --top-k 10
-semble search "encoded query syntax and examples" <docs-path> --content docs --top-k 10
-```
-
-Semble output is a retrieval aid, not the source of truth. After Semble returns candidate chunks, open and read the actual local markdown files under the selected docs path, then cite those local paths in the answer.
-
-If semantic-search tooling is unavailable, skip it and proceed from exact local search to Context7. Do not add OS-specific setup instructions to this skill.
-
-
-## Source Rules
-
-- Prefer `repos/servicenow-docs` for ServiceNow documentation facts when present.
-- Use `~/.local/share/servicenow-docs/{version}` when project-local docs are unavailable.
-- Use Context7 third via the globally installed `ctx7` CLI, in this source preference order: `developer_servicenow`, `servicenowguru`, `servicenowdevprogram/code-snippets`.
-- Treat `developer_servicenow` as the preferred Context7 source for official developer documentation.
-- Use non-official sources only as secondary context and label them as such.
-- Never treat vendored docs as application code.
+- Separate documented facts from interpretation; omit unsupported interpretation.
+- Prefer concise paraphrase over long quotation.
+- Cite a source per material claim: repo path for local, URL + trust label for web.
+- Never claim completeness beyond your evidence.
+- If local and web both fail, say so transparently: state what you searched, and give a clearly labeled **Model judgment, low confidence** answer if useful. Do not silently emit a bare "I don't know."
